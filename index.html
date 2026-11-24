@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>MyKongsi TV | Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#080e19;--line:#23334d;--text:#edf4ff;--muted:#91a2bb;--blue:#3b82f6;--green:#22c55e;--red:#f87171}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#080e19,#0c1728 55%,#091321);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;font-weight:700}button:disabled{opacity:.55;cursor:not-allowed}
+.hidden{display:none!important}.muted{color:var(--muted)}.small{font-size:12px}.wrap{max-width:1440px;margin:auto;padding:22px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#2563eb,#06b6d4);display:grid;place-items:center;font-weight:900;font-size:19px}
+.brand h1{font-size:19px;margin:0}.brand p{font-size:11px;color:var(--muted);margin:3px 0 0;letter-spacing:1.5px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:15px}.top-actions{display:flex;gap:9px;align-items:center}
+.btn{background:var(--blue);color:white}.btn.secondary{background:#20314b;color:#dceaff;border:1px solid #314765}.btn.danger{background:#991b1b;color:#fff}.btn.green{background:#14532d;color:#dcfce7}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:20px}.sidebar,.card{background:rgba(16,26,43,.92);border:1px solid var(--line);border-radius:17px}
+.sidebar{padding:13px;height:max-content;position:sticky;top:15px}.nav{width:100%;text-align:left;background:transparent;color:#b6c5da;margin:3px 0;padding:12px;border-radius:10px}.nav.active,.nav:hover{background:#1b3151;color:white}.nav span{display:inline-block;width:26px}
+.content{min-width:0}.page-title{font-size:25px;margin:2px 0 5px}.subtitle{color:var(--muted);margin:0 0 20px;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}.stat{padding:17px}.stat .label{font-size:12px;color:var(--muted)}.stat .num{font-size:29px;font-weight:800;margin-top:7px}
+.card{padding:18px;margin-bottom:16px}.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.card h3{margin:0;font-size:16px}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#b7c7dd;font-weight:700}
+input,select{background:#0a1423;color:var(--text);border:1px solid #2a3d59;border-radius:10px;padding:11px 12px;outline:none;width:100%;min-width:0}input:focus,select:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #3b82f622}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #22334b;font-size:13px}th{color:#91a2bb;font-size:11px;text-transform:uppercase;letter-spacing:.7px}td img{width:34px;height:34px;object-fit:contain;border-radius:8px;background:#fff}
+.pill{padding:4px 8px;border-radius:20px;font-size:11px;font-weight:800}.on{background:#123c2a;color:#86efac}.off{background:#45232b;color:#fda4af}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{padding:7px 9px;font-size:11px}
+.notice{padding:12px 14px;border:1px solid #284364;background:#10243d;color:#cfe5ff;border-radius:11px;font-size:12px;margin-bottom:15px;line-height:1.55}
+.login{max-width:440px;margin:9vh auto;padding:28px}.login .brand{margin-bottom:25px}.login h2{margin:0 0 7px}.login .btn{width:100%}
+.empty{text-align:center;padding:32px;color:var(--muted)}.modal-back{position:fixed;inset:0;background:#020617bb;display:grid;place-items:center;padding:18px;z-index:5}
+.modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#101a2b;border:1px solid #334966;border-radius:17px;padding:20px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.modal-head h3{margin:0}
+.toast{position:fixed;right:20px;bottom:20px;z-index:10;padding:13px 17px;background:#173252;border:1px solid #3b82f6;border-radius:12px;max-width:min(420px,90vw);box-shadow:0 12px 35px #0008}.toast.error{background:#431f2a;border-color:#ef4444}
+.filelabel{display:inline-flex;align-items:center;gap:8px;background:#20314b;color:#dceaff;padding:10px 13px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer}.filelabel input{display:none}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;display:flex;overflow:auto;gap:5px}.nav{white-space:nowrap;width:auto}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.wrap{padding:13px}.top{align-items:flex-start;flex-direction:column}.stats{gap:8px}.stat{padding:13px}.stat .num{font-size:24px}.grid2{grid-template-columns:1fr}.page-title{font-size:22px}}
+.movie-poster{width:42px;height:58px;object-fit:cover;border-radius:7px;background:#0a1423}
+</style>
+</head>
+<body>
+<main id="loginView" class="wrap">
+<section class="card login">
+<div class="brand"><div class="logo">MK</div><div><h1>MyKongsi TV</h1><p>CENTRAL IPTV MANAGEMENT</p></div></div>
+<h2>Admin Login</h2><p class="subtitle">Log masuk menggunakan akaun Admin Supabase.</p>
+<div class="field"><label>Email Admin</label><input id="email" type="email" placeholder="admin@email.com" autocomplete="username"></div>
+<div class="field"><label>Password</label><input id="password" type="password" placeholder="Password" autocomplete="current-password"></div>
+<button class="btn" id="loginBtn">Log Masuk</button>
+<p class="muted small" style="margin-top:15px">Akses ini untuk pentadbir berdaftar sahaja.</p>
+</section>
+</main>
+
+<div id="appView" class="wrap hidden">
+<header class="top">
+<div class="brand"><div class="logo">MK</div><div><h1>MyKongsi TV</h1><p>CENTRAL IPTV MANAGEMENT</p></div></div>
+<div class="top-actions"><span id="adminEmail" class="muted small"></span><button id="logoutBtn" class="btn secondary">Log Keluar</button></div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+<button class="nav active" data-page="dashboard"><span>▦</span> Dashboard</button>
+<button class="nav" data-page="channels"><span>▣</span> Manage Channels</button>
+<button class="nav" data-page="categories"><span>▤</span> Categories</button>
+<button class="nav" data-page="import"><span>⇧</span> Import Playlist</button>
+<button class="nav" data-page="movieProviders"><span>⌘</span> Movie API Providers</button>
+<button class="nav" data-page="movies"><span>🎬</span> Kongsi Movie</button>
+<button class="nav" data-page="movieCategories"><span>▤</span> Movie Categories</button>
+<button class="nav" data-page="movieLogs"><span>↻</span> Movie Sync Logs</button>
+</aside>
+<section class="content">
+<div id="dashboardPage">
+<h2 class="page-title">Dashboard</h2><p class="subtitle">Ringkasan pengurusan siaran MyKongsi TV.</p>
+<div class="stats">
+<div class="card stat"><div class="label">JUMLAH SALURAN</div><div id="totalChannels" class="num">—</div></div>
+<div class="card stat"><div class="label">SALURAN AKTIF</div><div id="activeChannels" class="num">—</div></div>
+<div class="card stat"><div class="label">KATEGORI</div><div id="totalCategories" class="num">—</div></div>
+<div class="card stat"><div class="label">SALURAN DIMATIKAN</div><div id="offChannels" class="num">—</div></div>
+</div>
+<div class="notice">Perubahan saluran disimpan terus ke Supabase. APK akan membaca senarai saluran aktif daripada database.</div>
+<div class="card"><div class="card-head"><h3>Saluran terkini</h3><button class="btn secondary" onclick="showPage('channels')">Lihat semua</button></div><div id="recentChannels" class="table-wrap"></div></div>
+</div>
+
+<div id="channelsPage" class="hidden">
+<h2 class="page-title">Manage Channels</h2><p class="subtitle">Tambah, kemas kini dan kawal siaran yang dipaparkan kepada pengguna.</p>
+<div class="card">
+<div class="card-head"><h3>Senarai saluran</h3><div class="toolbar">
+<input id="channelSearch" placeholder="Cari saluran..." style="width:190px">
+<button class="btn" id="addChannelBtn">+ Tambah Saluran</button>
+<button class="btn danger" id="deleteAllChannelsBtn">🗑 PADAM SEMUA SIARAN</button>
+</div></div>
+<div id="channelsTable" class="table-wrap"></div>
+</div>
+</div>
+
+<div id="categoriesPage" class="hidden">
+<h2 class="page-title">Categories</h2><p class="subtitle">Urus kategori saluran TV.</p>
+<div class="card"><div class="card-head"><h3>Senarai kategori</h3><button class="btn" id="addCategoryBtn">+ Tambah Kategori</button></div><div id="categoriesTable" class="table-wrap"></div></div>
+</div>
+
+<div id="importPage" class="hidden">
+<h2 class="page-title">Import Playlist M3U</h2><p class="subtitle">Import fail M3U/M3U8 yang bro miliki atau dibenarkan untuk diedarkan.</p>
+<div class="card">
+<div class="notice">Parser membaca #EXTINF, group-title, tvg-logo, #EXTVLCOPT (User-Agent/Referer) dan metadata #KODIPROP. Kunci lesen DRM tidak disimpan dalam jadual saluran yang boleh dibaca APK secara umum. Import hanya kandungan yang bro miliki atau dibenarkan untuk diedarkan.</div>
+<div class="field"><label>Pilih fail playlist</label><label class="filelabel">Pilih fail .m3u / .m3u8 <input type="file" id="m3uFile" accept=".m3u,.m3u8,text/plain"></label><span id="fileName" class="muted small">Tiada fail dipilih.</span></div>
+<button class="btn" id="importBtn">Import ke Database</button><div id="importResult" class="muted small" style="margin-top:14px"></div>
+</div>
+</div>
+<div id="movieProvidersPage" class="hidden">
+<h2 class="page-title">Movie API Providers</h2><p class="subtitle">Daftar penyedia katalog yang membenarkan integrasi. Rahsia API tidak disimpan dalam HTML ini.</p>
+<div class="notice">Masukkan maklumat awam penyedia sahaja. API key, client secret dan token mesti disimpan sebagai Supabase Edge Function Secrets di bahagian server.</div>
+<div class="card"><div class="card-head"><h3>Senarai penyedia</h3><button class="btn" id="addMovieProviderBtn">+ Tambah Penyedia</button></div><div id="movieProvidersTable" class="table-wrap"></div></div>
+</div>
+<div id="moviesPage" class="hidden">
+<h2 class="page-title">Kongsi Movie</h2><p class="subtitle">Urus metadata katalog filem dan siri. Sumber playback hanya boleh ditambah jika hak akses kandungan telah disahkan.</p>
+<div class="card"><div class="card-head"><h3>Katalog filem & siri</h3><div class="toolbar"><input id="movieSearch" placeholder="Cari tajuk..." style="width:190px"><button class="btn" id="addMovieBtn">+ Tambah Tajuk</button></div></div><div id="moviesTable" class="table-wrap"></div></div>
+</div>
+<div id="movieCategoriesPage" class="hidden">
+<h2 class="page-title">Movie Categories</h2><p class="subtitle">Genre dan kategori untuk Kongsi Movie.</p>
+<div class="card"><div class="card-head"><h3>Senarai kategori</h3><button class="btn" id="addMovieCategoryBtn">+ Tambah Kategori</button></div><div id="movieCategoriesTable" class="table-wrap"></div></div>
+</div>
+<div id="movieLogsPage" class="hidden">
+<h2 class="page-title">Movie Sync Logs</h2><p class="subtitle">Rekod percubaan import dan penyegerakan katalog.</p>
+<div class="card"><div class="card-head"><h3>Rekod sync</h3><button class="btn secondary" id="refreshMovieLogsBtn">Muat Semula</button></div><div id="movieLogsTable" class="table-wrap"></div></div>
+</div>
+</section>
+</div>
+</div>
+
+<div id="modalRoot"></div><div id="toastRoot"></div>
+<script>
+/* Supabase Project URL dan publishable/anon key. Jangan gunakan service_role key di browser. */
+const SUPABASE_URL="https://khqpdwjjtycdzumgjczi.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_svJ0JPSTybqnEoQNB1oMmw_YnGkPsAX";
+const LOGO_BUCKET="channel-logos";
+
+let db=null,channels=[],categories=[],editingChannelId=null;
+const $=id=>document.getElementById(id);
+const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_ANON_KEY.includes("PASTE_");
+
+function toast(message,error=false){
+ const el=document.createElement("div");el.className="toast"+(error?" error":"");el.textContent=message;$("toastRoot").appendChild(el);setTimeout(()=>el.remove(),4500);
+}
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function showPage(page){
+ ["dashboard","channels","categories","import","movieProviders","movies","movieCategories","movieLogs"].forEach(p=>$(p+"Page").classList.toggle("hidden",p!==page));
+ document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ if(page==="dashboard")renderDashboard();
+ if(page==="channels")renderChannels();
+ if(page==="categories")renderCategories();
+ if(page==="movieProviders")loadMovieProviders();
+ if(page==="movies")loadMovies();
+ if(page==="movieCategories")loadMovieCategories();
+ if(page==="movieLogs")loadMovieLogs();
+}
+window.showPage=showPage;
+
+function showApp(user){
+ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("adminEmail").textContent=user.email||"Admin";loadAll();
+}
+function showLogin(){$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");}
+async function ensureAdmin(){
+ const {data:{user},error}=await db.auth.getUser();
+ if(error||!user)return false;
+ const {data,error:e}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
+ if(e)throw e;
+ if(!data){await db.auth.signOut();throw new Error("Akaun ini belum didaftarkan sebagai Admin dalam jadual admin_users.");}
+ showApp(user);return true;
+}
+async function loadAll(){
+ try{
+  const [c1,c2]=await Promise.all([
+   db.from("categories").select("*").order("sort_order"),
+   db.from("channels").select("*, categories(name)").order("sort_order")
+  ]);
+  if(c1.error)throw c1.error;if(c2.error)throw c2.error;
+  categories=c1.data||[];channels=c2.data||[];
+  renderDashboard();renderChannels();renderCategories();
+ }catch(e){toast("Gagal memuat data: "+e.message,true);}
+}
+function channelRows(list){
+ if(!list.length)return '<div class="empty">Belum ada saluran. Klik Tambah Saluran untuk bermula.</div>';
+ return `<table><thead><tr><th>Logo</th><th>Nama</th><th>Kategori</th><th>Format</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${list.map(c=>`<tr><td>${c.logo_url?`<img src="${esc(c.logo_url)}" alt="">`:"—"}</td><td><b>${esc(c.name)}</b></td><td>${esc(c.categories?.name||"—")}</td><td>${esc(c.stream_format)}</td><td><span class="pill ${c.is_active?"on":"off"}">${c.is_active?"AKTIF":"OFF"}</span></td><td><div class="actions"><button class="btn secondary" onclick="editChannel('${c.id}')">Edit</button><button class="btn ${c.is_active?"danger":"green"}" onclick="toggleChannel('${c.id}',${!c.is_active})">${c.is_active?"OFF":"ON"}</button><button class="btn danger" onclick="deleteChannel('${c.id}')">Padam</button></div></td></tr>`).join("")}</tbody></table>`;
+}
+function renderDashboard(){
+ $("totalChannels").textContent=channels.length;$("activeChannels").textContent=channels.filter(c=>c.is_active).length;
+ $("offChannels").textContent=channels.filter(c=>!c.is_active).length;$("totalCategories").textContent=categories.length;
+ $("recentChannels").innerHTML=channelRows(channels.slice(0,5));
+}
+function renderChannels(){
+ const q=($("channelSearch").value||"").toLowerCase();
+ $("channelsTable").innerHTML=channelRows(channels.filter(c=>(c.name||"").toLowerCase().includes(q)||(c.categories?.name||"").toLowerCase().includes(q)));
+}
+function renderCategories(){
+ $("categoriesTable").innerHTML=categories.length?`<table><thead><tr><th>Nama kategori</th><th>Susunan</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${categories.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${c.sort_order}</td><td><span class="pill ${c.is_active?"on":"off"}">${c.is_active?"AKTIF":"OFF"}</span></td><td><div class="actions"><button class="btn secondary" onclick="renameCategory('${c.id}','${esc(c.name)}')">Edit</button><button class="btn danger" onclick="deleteCategory('${c.id}')">Padam</button></div></td></tr>`).join("")}</tbody></table>`:'<div class="empty">Belum ada kategori.</div>';
+}
+function openModal(title,body){
+ $("modalRoot").innerHTML=`<div class="modal-back"><div class="modal"><div class="modal-head"><h3>${title}</h3><button class="btn secondary" onclick="closeModal()">Tutup</button></div>${body}</div></div>`;
+}
+function closeModal(){$("modalRoot").innerHTML="";}
+window.closeModal=closeModal;
+
+function channelForm(c={}){
+ const opts=categories.map(x=>`<option value="${x.id}" ${c.category_id===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
+ openModal(c.id?"Edit Saluran":"Tambah Saluran",`
+ <form id="channelForm">
+ <div class="field"><label>Nama saluran</label><input name="name" required value="${esc(c.name||"")}" placeholder="Contoh: TV1"></div>
+ <div class="field"><label>Kategori</label><select name="category_id"><option value="">Tanpa kategori</option>${opts}</select></div>
+ <div class="field"><label>URL siaran</label><input name="stream_url" type="url" required value="${esc(c.stream_url||"")}" placeholder="https://..."></div>
+ <div class="grid2"><div class="field"><label>Format</label><select name="stream_format"><option value="HLS" ${c.stream_format==="HLS"?"selected":""}>HLS / M3U8</option><option value="DASH" ${c.stream_format==="DASH"?"selected":""}>MPEG-DASH / MPD</option><option value="FILE" ${c.stream_format==="FILE"?"selected":""}>Fail / MKV / lain-lain</option></select></div>
+ <div class="field"><label>Susunan</label><input name="sort_order" type="number" value="${c.sort_order??0}"></div></div>
+ <div class="field"><label>Logo saluran (pilihan)</label><input name="logo" type="file" accept="image/*"></div>
+ <label class="small"><input name="is_active" type="checkbox" ${c.is_active===false?"":"checked"} style="width:auto"> Saluran aktif</label>
+ <div style="margin-top:18px"><button class="btn" type="submit">Simpan Saluran</button></div>
+ </form>`);
+ $("channelForm").addEventListener("submit",saveChannel);
+}
+window.editChannel=id=>{const c=channels.find(x=>x.id===id);if(c){editingChannelId=id;channelForm(c);}};
+async function saveChannel(ev){
+ ev.preventDefault();const fd=new FormData(ev.currentTarget);const file=fd.get("logo");
+ let logo_url=editingChannelId?channels.find(c=>c.id===editingChannelId)?.logo_url:null;
+ try{
+  if(file&&file.size){
+   const ext=(file.name.split(".").pop()||"png").toLowerCase();const path=`${crypto.randomUUID()}.${ext}`;
+   const {error}=await db.storage.from(LOGO_BUCKET).upload(path,file,{upsert:false,contentType:file.type});if(error)throw error;
+   logo_url=db.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+  const payload={name:fd.get("name").trim(),category_id:fd.get("category_id")||null,stream_url:fd.get("stream_url").trim(),stream_format:fd.get("stream_format"),sort_order:Number(fd.get("sort_order")||0),is_active:fd.get("is_active")==="on",logo_url,updated_at:new Date().toISOString()};
+  const id=editingChannelId;const result=id?await db.from("channels").update(payload).eq("id",id):await db.from("channels").insert(payload);
+  if(result.error)throw result.error;editingChannelId=null;closeModal();toast("Saluran berjaya disimpan.");await loadAll();
+ }catch(e){toast("Gagal simpan: "+e.message,true);}
+}
+window.toggleChannel=async(id,on)=>{
+ const {error}=await db.from("channels").update({is_active:on,updated_at:new Date().toISOString()}).eq("id",id);
+ if(error)toast(error.message,true);else{toast(on?"Saluran diaktifkan.":"Saluran dimatikan.");await loadAll();}
+};
+window.deleteChannel=async id=>{
+ if(!confirm("Padam saluran ini?"))return;
+ const {error}=await db.from("channels").delete().eq("id",id);
+ if(error)toast(error.message,true);else{toast("Saluran dipadam.");await loadAll();}
+};
+
+/* PADAM SEMUA SIARAN: semak Admin, sahkan dua kali, kategori tidak dipadam. */
+$("deleteAllChannelsBtn").onclick=async()=>{
+ const btn=$("deleteAllChannelsBtn");
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError||!user)throw new Error("Sesi Admin tidak sah. Sila log masuk semula.");
+  const {data:admin,error:adminError}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
+  if(adminError)throw adminError;
+  if(!admin)throw new Error("Akses ditolak. Admin sahaja dibenarkan.");
+  const {data:rows,error:fetchError}=await db.from("channels").select("id");
+  if(fetchError)throw fetchError;
+  const ids=(rows||[]).map(r=>r.id);
+  if(!ids.length){toast("Tiada siaran untuk dipadam.");return;}
+  if(!confirm(`AMARAN!\n\nAnda akan memadam SEMUA ${ids.length} SIARAN.\n\nKategori tidak akan dipadam.\n\nTeruskan?`))return;
+  if(!confirm("PENGESAHAN TERAKHIR!\n\nTindakan ini tidak boleh dibuat asal.\n\nPadam semua siaran sekarang?"))return;
+  btn.disabled=true;btn.textContent="Sedang memadam...";
+  for(let i=0;i<ids.length;i+=100){
+   const batch=ids.slice(i,i+100);
+   const {error}=await db.from("channels").delete().in("id",batch);
+   if(error)throw error;
+  }
+  await loadAll();toast(`Berjaya memadam ${ids.length} siaran. Kategori dikekalkan.`);
+ }catch(e){toast("Gagal memadam: "+e.message,true);}
+ finally{btn.disabled=false;btn.textContent="🗑 PADAM SEMUA SIARAN";}
+};
+
+$("addChannelBtn").onclick=()=>{editingChannelId=null;channelForm({is_active:true});};
+$("channelSearch").addEventListener("input",renderChannels);
+$("addCategoryBtn").onclick=()=>openModal("Tambah Kategori",`<form id="catForm"><div class="field"><label>Nama kategori</label><input name="name" required placeholder="Contoh: Berita"></div><div class="field"><label>Susunan</label><input name="sort_order" type="number" value="0"></div><button class="btn">Simpan Kategori</button></form>`);
+document.addEventListener("submit",async e=>{
+ if(e.target.id==="catForm"){
+  e.preventDefault();const fd=new FormData(e.target);
+  const {error}=await db.from("categories").insert({name:fd.get("name").trim(),sort_order:Number(fd.get("sort_order")||0)});
+  if(error)toast(error.message,true);else{closeModal();toast("Kategori ditambah.");await loadAll();}
+ }
+});
+window.renameCategory=async(id,old)=>{
+ const name=prompt("Nama kategori baharu:",old);if(!name||!name.trim())return;
+ const {error}=await db.from("categories").update({name:name.trim()}).eq("id",id);
+ if(error)toast(error.message,true);else{toast("Kategori dikemas kini.");await loadAll();}
+};
+window.deleteCategory=async id=>{
+ if(!confirm("Padam kategori ini? Saluran berkaitan akan menjadi tanpa kategori."))return;
+ const {error}=await db.from("categories").delete().eq("id",id);
+ if(error)toast(error.message,true);else{toast("Kategori dipadam.");await loadAll();}
+};
+
+function parseM3U(text){
+ const lines=text.replace(/\r/g,"").split("\n");
+ const out=[];
+ let meta=null, pendingHeaders={}, drmType=null, drmKeySeen=false;
+ const attr=(s,key)=>{
+  const re=new RegExp('(?:^|\\s)'+key+'\\s*=\\s*"([^"]*)"','i');
+  return (s.match(re)||[])[1]||"";
+ };
+ for(const raw of lines){
+  const line=raw.trim(); if(!line)continue;
+  if(line.startsWith("#EXTINF:")){
+   const comma=line.indexOf(",");
+   const attrs=comma>=0?line.slice(0,comma):line;
+   const name=comma>=0?line.slice(comma+1).trim():"Unnamed";
+   meta={name:name||"Unnamed",group:attr(attrs,"group-title")||"Lain-lain",
+    logo:attr(attrs,"tvg-logo")||null,tvgId:attr(attrs,"tvg-id")||null,
+    tvgName:attr(attrs,"tvg-name")||null,channelNumber:attr(attrs,"ch-number")||""};
+   pendingHeaders={}; drmType=null; drmKeySeen=false;
+  }else if(line.startsWith("#EXTVLCOPT:")&&meta){
+   const opt=line.substring("#EXTVLCOPT:".length), pos=opt.indexOf("=");
+   if(pos>0){
+    const key=opt.slice(0,pos).trim().toLowerCase(), value=opt.slice(pos+1).trim();
+    if(key==="http-user-agent")pendingHeaders.user_agent=value;
+    if(key==="http-referrer"||key==="http-referer")pendingHeaders.http_referrer=value;
+   }
+  }else if(line.startsWith("#KODIPROP:")&&meta){
+   const prop=line.substring("#KODIPROP:".length), pos=prop.indexOf("=");
+   if(pos>0){
+    const key=prop.slice(0,pos).trim().toLowerCase(), value=prop.slice(pos+1).trim();
+    if(key.endsWith("license_type"))drmType=value;
+    if(key.endsWith("license_key")&&value)drmKeySeen=true;
+   }
+  }else if(!line.startsWith("#")&&meta){
+   const lower=line.toLowerCase();
+   const fmt=lower.includes(".mpd")?"DASH":lower.includes(".m3u8")||lower.includes(".m3u")?"HLS":"FILE";
+   out.push({...meta,url:line,fmt,user_agent:pendingHeaders.user_agent||null,
+    http_referrer:pendingHeaders.http_referrer||null,drm_scheme:drmType||null,
+    drm_config_required:!!drmType||drmKeySeen});
+   meta=null; pendingHeaders={}; drmType=null; drmKeySeen=false;
+  }
+ }
+ return out;
+}
+$("m3uFile").addEventListener("change",e=>$("fileName").textContent=e.target.files[0]?.name||"Tiada fail dipilih.");
+$("importBtn").onclick=async()=>{
+ const file=$("m3uFile").files[0];if(!file){toast("Pilih fail M3U dahulu.",true);return;}
+ const btn=$("importBtn");btn.disabled=true;btn.textContent="Sedang import...";
+ try{
+  const parsed=parseM3U(await file.text());if(!parsed.length)throw new Error("Tiada rekod saluran ditemui dalam fail.");
+  let count=0;
+  for(const item of parsed){
+   let cat=categories.find(c=>c.name.toLowerCase()===item.group.toLowerCase());
+   if(!cat){const {data,error}=await db.from("categories").insert({name:item.group}).select().single();if(error)throw error;cat=data;categories.push(cat);}
+   const payload={name:item.name,category_id:cat.id,stream_url:item.url,stream_format:item.fmt,logo_url:item.logo,sort_order:count,is_active:true,user_agent:item.user_agent,http_referrer:item.http_referrer,drm_scheme:item.drm_scheme,drm_config_required:item.drm_config_required};
+   const {error}=await db.from("channels").insert(payload);if(error)throw error;count++;
+  }
+  $("importResult").textContent=`Berjaya import ${count} saluran. Metadata User-Agent/Referer dan penanda DRM turut diproses jika tersedia.`;toast(`Import selesai: ${count} saluran.`);await loadAll();
+ }catch(e){toast("Import gagal: "+e.message,true);}
+ finally{btn.disabled=false;btn.textContent="Import ke Database";}
+};
+document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+$("loginBtn").onclick=async()=>{
+ if(!configured){toast("Semak konfigurasi Supabase dalam index.html.",true);return;}
+ const btn=$("loginBtn");btn.disabled=true;
+ try{
+  const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error)throw error;await ensureAdmin();
+ }catch(e){toast("Login gagal: "+e.message,true);}
+ finally{btn.disabled=false;}
+};
+$("logoutBtn").onclick=async()=>{await db.auth.signOut();showLogin();};
+if(configured){
+ db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+ db.auth.getSession().then(async({data})=>{if(data.session){try{await ensureAdmin();}catch(e){toast(e.message,true);}}});
+}
+
+/* KONGSI MOVIE ADMIN MODULE. Provider credentials are server-side only. */
+
+/* KONGSI MOVIE ADMIN MODULE. Provider credentials are server-side only. */
+let kmProviders=[],kmMovies=[],kmCategories=[];
+function kmErr(el,e){$(el).innerHTML='<div class="empty">Gagal memuat data: '+esc(e.message)+'</div>';}
+async function loadMovieProviders(){try{const {data,error}=await db.from("km_providers").select("*").order("name");if(error)throw error;kmProviders=data||[];renderMovieProviders();}catch(e){kmErr("movieProvidersTable",e);}}
+function renderMovieProviders(){$("movieProvidersTable").innerHTML=kmProviders.length?`<table><thead><tr><th>Nama</th><th>Jenis API</th><th>Website</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${kmProviders.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.api_type||"REST")}</td><td>${p.website_url?`<a target="_blank" rel="noopener" href="${esc(p.website_url)}">Buka</a>`:"—"}</td><td><span class="pill ${p.is_active?"on":"off"}">${p.is_active?"AKTIF":"OFF"}</span></td><td><div class="actions"><button class="btn secondary" onclick="editKmProvider('${p.id}')">Edit</button><button class="btn ${p.is_active?"danger":"green"}" onclick="toggleKmProvider('${p.id}',${!p.is_active})">${p.is_active?"OFF":"ON"}</button></div></td></tr>`).join("")}</tbody></table>`:'<div class="empty">Belum ada penyedia API.</div>';}
+function kmProviderForm(p={}){openModal(p.id?"Edit Penyedia API":"Tambah Penyedia API",`<form id="kmProviderForm"><div class="field"><label>Nama penyedia</label><input name="name" required value="${esc(p.name||"")}"></div><div class="grid2"><div class="field"><label>Jenis API</label><select name="api_type"><option>REST</option><option>GraphQL</option><option>Other</option></select></div><div class="field"><label>Website</label><input name="website_url" type="url" value="${esc(p.website_url||"")}"></div></div><div class="field"><label>Dokumentasi API</label><input name="docs_url" type="url" value="${esc(p.docs_url||"")}"></div><div class="field"><label>Nota / skop kebenaran</label><input name="notes" value="${esc(p.notes||"")}"></div><label class="small"><input name="is_active" type="checkbox" ${p.is_active===false?"":"checked"} style="width:auto"> Penyedia aktif</label><div class="notice" style="margin-top:12px">Jangan masukkan API key atau token di sini. Simpan rahsia melalui Supabase Edge Function Secrets.</div><div style="margin-top:18px"><button class="btn" type="submit">Simpan Penyedia</button></div></form>`);$("kmProviderForm").addEventListener("submit",async ev=>{ev.preventDefault();const f=new FormData(ev.currentTarget),payload={name:f.get("name").trim(),api_type:f.get("api_type"),website_url:f.get("website_url")||null,docs_url:f.get("docs_url")||null,notes:f.get("notes")||null,is_active:f.get("is_active")==="on",updated_at:new Date().toISOString()};try{const r=p.id?await db.from("km_providers").update(payload).eq("id",p.id):await db.from("km_providers").insert(payload);if(r.error)throw r.error;closeModal();toast("Penyedia disimpan.");loadMovieProviders();}catch(e){toast(e.message,true);}});}
+window.editKmProvider=id=>{const p=kmProviders.find(x=>x.id===id);if(p)kmProviderForm(p);};
+window.toggleKmProvider=async(id,on)=>{const {error}=await db.from("km_providers").update({is_active:on,updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,true);else loadMovieProviders();};
+async function loadMovies(){try{const {data,error}=await db.from("km_movies").select("*,km_providers(name)").order("created_at",{ascending:false});if(error)throw error;kmMovies=data||[];renderMovies();}catch(e){kmErr("moviesTable",e);}}
+function renderMovies(){const q=($("movieSearch").value||"").toLowerCase(),list=kmMovies.filter(m=>(m.title||"").toLowerCase().includes(q));$("moviesTable").innerHTML=list.length?`<table><thead><tr><th>Poster</th><th>Tajuk</th><th>Jenis</th><th>Tahun</th><th>Penyedia</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${list.map(m=>`<tr><td>${m.poster_url?`<img class="movie-poster" src="${esc(m.poster_url)}" alt="">`:"—"}</td><td><b>${esc(m.title)}</b></td><td>${esc(m.content_type)}</td><td>${esc(m.release_year||"—")}</td><td>${esc(m.km_providers?.name||"Manual")}</td><td><span class="pill ${m.status==="published"?"on":"off"}">${esc((m.status||"draft").toUpperCase())}</span></td><td><div class="actions"><button class="btn secondary" onclick="editKmMovie('${m.id}')">Edit</button><button class="btn ${m.status==="published"?"danger":"green"}" onclick="toggleKmMovie('${m.id}','${m.status==="published"?"draft":"published"}')">${m.status==="published"?"DRAFT":"TERBIT"}</button></div></td></tr>`).join("")}</tbody></table>`:'<div class="empty">Belum ada tajuk dalam katalog.</div>';}
+function kmMovieForm(m={}){const providers=kmProviders.map(p=>`<option value="${p.id}" ${m.provider_id===p.id?"selected":""}>${esc(p.name)}</option>`).join("");openModal(m.id?"Edit Tajuk":"Tambah Tajuk",`<form id="kmMovieForm"><div class="field"><label>Tajuk</label><input name="title" required value="${esc(m.title||"")}"></div><div class="grid2"><div class="field"><label>Jenis</label><select name="content_type"><option value="movie">Movie</option><option value="series">TV Series</option><option value="anime">Anime</option><option value="documentary">Dokumentari</option><option value="kids">Kids</option></select></div><div class="field"><label>Tahun</label><input name="release_year" type="number" min="1888" max="2100" value="${esc(m.release_year||"")}"></div></div><div class="field"><label>Poster URL</label><input name="poster_url" type="url" value="${esc(m.poster_url||"")}"></div><div class="field"><label>Backdrop URL</label><input name="backdrop_url" type="url" value="${esc(m.backdrop_url||"")}"></div><div class="field"><label>Sinopsis</label><textarea name="overview" rows="4" style="width:100%;background:#0a1423;color:var(--text);border:1px solid #2a3d59;border-radius:10px;padding:11px">${esc(m.overview||"")}</textarea></div><div class="grid2"><div class="field"><label>Penyedia</label><select name="provider_id"><option value="">Manual / tiada</option>${providers}</select></div><div class="field"><label>ID tajuk penyedia</label><input name="external_id" value="${esc(m.external_id||"")}"></div></div><div class="field"><label>Status</label><select name="status"><option value="draft">Draft</option><option value="published">Published</option></select></div><button class="btn" type="submit">Simpan Tajuk</button></form>`);$("kmMovieForm").addEventListener("submit",async ev=>{ev.preventDefault();const f=new FormData(ev.currentTarget),payload={title:f.get("title").trim(),content_type:f.get("content_type"),release_year:f.get("release_year")?Number(f.get("release_year")):null,poster_url:f.get("poster_url")||null,backdrop_url:f.get("backdrop_url")||null,overview:f.get("overview")||null,provider_id:f.get("provider_id")||null,external_id:f.get("external_id")||null,status:f.get("status"),updated_at:new Date().toISOString()};try{const r=m.id?await db.from("km_movies").update(payload).eq("id",m.id):await db.from("km_movies").insert(payload);if(r.error)throw r.error;closeModal();toast("Tajuk katalog disimpan.");loadMovies();}catch(e){toast(e.message,true);}});}
+window.editKmMovie=id=>{const m=kmMovies.find(x=>x.id===id);if(m)kmMovieForm(m);};
+window.toggleKmMovie=async(id,status)=>{const {error}=await db.from("km_movies").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,true);else loadMovies();};
+async function loadMovieCategories(){try{const {data,error}=await db.from("km_categories").select("*").order("sort_order");if(error)throw error;kmCategories=data||[];renderMovieCategories();}catch(e){kmErr("movieCategoriesTable",e);}}
+function renderMovieCategories(){$("movieCategoriesTable").innerHTML=kmCategories.length?`<table><thead><tr><th>Nama</th><th>Susunan</th><th>Status</th><th>Tindakan</th></tr></thead><tbody>${kmCategories.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${c.sort_order??0}</td><td><span class="pill ${c.is_active?"on":"off"}">${c.is_active?"AKTIF":"OFF"}</span></td><td><div class="actions"><button class="btn secondary" onclick="editKmCategory('${c.id}')">Edit</button><button class="btn ${c.is_active?"danger":"green"}" onclick="toggleKmCategory('${c.id}',${!c.is_active})">${c.is_active?"OFF":"ON"}</button><button class="btn danger" onclick="deleteKmCategory('${c.id}')">Delete</button></div></td></tr>`).join("")}</tbody></table>`:'<div class="empty">Belum ada kategori movie.</div>';}
+$("addMovieCategoryBtn").onclick=async()=>{const name=prompt("Nama kategori movie:");if(!name||!name.trim())return;try{const {error}=await db.from("km_categories").insert({name:name.trim()});if(error)throw error;toast("Kategori berjaya ditambah.");await loadMovieCategories();}catch(e){toast(e.message,true);}};
+window.editKmCategory=async(id)=>{const c=kmCategories.find(x=>x.id===id);if(!c)return;const name=prompt("Betulkan nama kategori:",c.name);if(name===null||!name.trim())return;try{const {error}=await db.from("km_categories").update({name:name.trim(),updated_at:new Date().toISOString()}).eq("id",id);if(error)throw error;toast("Nama kategori berjaya dikemas kini.");await loadMovieCategories();}catch(e){toast(e.message,true);}};
+window.deleteKmCategory=async(id)=>{const c=kmCategories.find(x=>x.id===id);if(!c)return;if(!confirm(`Padam kategori "${c.name}"? Tindakan ini tidak boleh dibatalkan.`))return;try{const {data:links,error:checkError}=await db.from("km_movie_categories").select("movie_id").eq("category_id",id).limit(1);if(checkError)throw checkError;if(links&&links.length){toast("Kategori ini sedang digunakan oleh filem. Nyahpaut kategori daripada filem dahulu.",true);return;}const {error}=await db.from("km_categories").delete().eq("id",id);if(error)throw error;toast("Kategori berjaya dipadam.");await loadMovieCategories();}catch(e){toast(e.message,true);}};
+window.toggleKmCategory=async(id,on)=>{try{const {error}=await db.from("km_categories").update({is_active:on,updated_at:new Date().toISOString()}).eq("id",id);if(error)throw error;await loadMovieCategories();}catch(e){toast(e.message,true);}};
+async function loadMovieLogs(){try{const {data,error}=await db.from("km_sync_logs").select("*").order("created_at",{ascending:false}).limit(100);if(error)throw error;$("movieLogsTable").innerHTML=data?.length?`<table><thead><tr><th>Masa</th><th>Jenis</th><th>Status</th><th>Mesej</th><th>Rekod</th></tr></thead><tbody>${data.map(x=>`<tr><td>${esc((x.created_at||"").slice(0,16).replace("T"," "))}</td><td>${esc(x.sync_type)}</td><td>${esc(x.status)}</td><td>${esc(x.message||"—")}</td><td>${x.records_count??0}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">Belum ada rekod sync.</div>';}catch(e){kmErr("movieLogsTable",e);}}
+$("addMovieProviderBtn").onclick=()=>kmProviderForm({});
+$("addMovieBtn").onclick=()=>kmMovieForm({});
+$("movieSearch").addEventListener("input",renderMovies);
+$("refreshMovieLogsBtn").onclick=loadMovieLogs;
+
+
+</script>
+</body>
+</html>
